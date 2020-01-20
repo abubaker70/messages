@@ -13,6 +13,8 @@ import {
 } from "react-native";
 
 import db from "../db.js";
+import firebase from "firebase/app";
+import "firebase/auth";
 
 db.collection("messages").onSnapshot(querySnapshot => {
   var messages = [];
@@ -24,7 +26,6 @@ db.collection("messages").onSnapshot(querySnapshot => {
 
 export default function HomeScreen() {
   const [messages, setMessages] = useState([]);
-  const [from, setFrom] = useState("");
   const [text, setText] = useState("");
   const [to, setTo] = useState("");
   const [id, setId] = useState("");
@@ -40,6 +41,10 @@ export default function HomeScreen() {
     });
   }, []);
 
+  useEffect(() => {
+    console.log("Auth: ", firebase.auth());
+  }, []);
+
   const handleDelete = message => {
     db.collection("messages")
       .doc(message.id)
@@ -47,13 +52,13 @@ export default function HomeScreen() {
   };
 
   const handleEdit = message => {
-    setFrom(message.from);
     setText(message.text);
     setTo(message.to);
     setId(message.id);
   };
 
   const handleSend = () => {
+    const from = firebase.auth().currentUser.uid;
     if (id) {
       db.collection("messages")
         .doc(id)
@@ -61,7 +66,7 @@ export default function HomeScreen() {
     } else {
       db.collection("messages").add({ from, text, to });
     }
-    setFrom("");
+
     setText("");
     setTo("");
     setId("");
@@ -76,19 +81,14 @@ export default function HomeScreen() {
         {messages.map((message, i) => (
           <View style={styles.getStartedText} key={i}>
             <Text style={styles.getStartedText}>
-              {message.from} {message.text} {message.to}
+              {message.from} - {message.text} - {message.to}
             </Text>
             <Button title="Edit" onPress={() => handleEdit(message)} />
             <Button title="Delete" onPress={() => handleDelete(message)} />
           </View>
         ))}
       </ScrollView>
-      <TextInput
-        style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
-        placeholder="From"
-        onChangeText={setFrom}
-        value={from}
-      />
+
       <TextInput
         style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
         placeholder="Text"
