@@ -1,5 +1,6 @@
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useState } from "react";
+import Message from "./Message";
 import {
   Image,
   Platform,
@@ -15,6 +16,7 @@ import {
 import db from "../db.js";
 import firebase from "firebase/app";
 import "firebase/auth";
+import SettingsScreen from "./SettingsScreen.js";
 
 db.collection("messages").onSnapshot(querySnapshot => {
   var messages = [];
@@ -36,7 +38,7 @@ export default function HomeScreen() {
       querySnapshot.forEach(doc => {
         messages.push({ id: doc.id, ...doc.data() });
       });
-      console.log("Current messages ", messages.join(", "));
+      // console.log("Current messages ", messages.join(", "));
       setMessages([...messages]);
     });
   }, []);
@@ -45,16 +47,14 @@ export default function HomeScreen() {
     console.log("Auth: ", firebase.auth());
   }, []);
 
-  const handleDelete = message => {
-    db.collection("messages")
-      .doc(message.id)
-      .delete();
-  };
-
   const handleEdit = message => {
     setText(message.text);
     setTo(message.to);
     setId(message.id);
+  };
+
+  const handleLogout = () => {
+    firebase.auth().signOut();
   };
 
   const handleSend = () => {
@@ -78,14 +78,9 @@ export default function HomeScreen() {
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
       >
+        <Button title="Logout" onPress={handleLogout} />
         {messages.map((message, i) => (
-          <View style={styles.getStartedText} key={i}>
-            <Text style={styles.getStartedText}>
-              {message.from} - {message.text} - {message.to}
-            </Text>
-            <Button title="Edit" onPress={() => handleEdit(message)} />
-            <Button title="Delete" onPress={() => handleDelete(message)} />
-          </View>
+          <Message key={i} message={message} handleEdit={handleEdit} />
         ))}
       </ScrollView>
 

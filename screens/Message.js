@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { ExpoConfigView } from "@expo/samples";
+import * as WebBrowser from "expo-web-browser";
+import React, { useEffect, useState } from "react";
+
 import {
   Image,
   Platform,
@@ -11,59 +12,46 @@ import {
   Button,
   TextInput
 } from "react-native";
+
+import db from "../db.js";
 import firebase from "firebase/app";
 import "firebase/auth";
-import db from "../db";
+import "firebase/database";
+import SettingsScreen from "./SettingsScreen.js";
 
-export default function SettingsScreen() {
-  const [displayName, setDisplayName] = useState("");
-  const [photoURL, setPhotoURL] = useState("");
+export default ({ message, handleEdit }) => {
+  const [from, setFrom] = useState("");
+
+  useEffect(() => {
+    handleSet();
+  }, []);
 
   const handleSet = async () => {
     const info = await db
       .collection("users")
       .doc(firebase.auth().currentUser.uid)
-      .get();
+      .get(snapshot => {
+        console.log("message. from data", snapshot.data());
+      });
   };
 
-  useEffect(() => {
-    // setDisplayName(firebase.auth().currentUser.displayName);
-    // setPhotoURL(firebase.auth().currentUser.photoURL);
-    handleSet();
-  }, []);
-
-  const handleSave = () => {
-    // firebase.auth().currentUser.updateProfile({
-    //   displayName,
-    //   photoURL
-    // });
-
-    db.collection("users")
-      .doc(firebase.auth().currentUser.uuid)
-      .update({ displayNmae: "", photoURL: "" });
+  const handleDelete = message => {
+    db.collection("messages")
+      .doc(message.id)
+      .delete();
   };
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
-        placeholder="DisplayName"
-        onChangeText={setDisplayName}
-        value={displayName}
-      />
-      <TextInput
-        style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
-        placeholder="Photo URL"
-        onChangeText={setPhotoURL}
-        value={photoURL}
-      />
-      <Button title="save" onPress={handleSave} />
-    </View>
+    <>
+      <View>
+        <Text style={styles.getStartedText}>
+          {message.from} - {message.text} - {message.to}
+        </Text>
+        <Button title="Edit" onPress={() => handleEdit(message)} />
+        <Button title="Delete" onPress={() => handleDelete(message)} />
+      </View>
+    </>
   );
-}
-
-SettingsScreen.navigationOptions = {
-  title: "app.json"
 };
 
 const styles = StyleSheet.create({
