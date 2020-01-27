@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ExpoConfigView } from "@expo/samples";
+import ImagePicker from "expo-image-picker";
 import {
   Image,
   Platform,
@@ -18,12 +19,20 @@ import db from "../db";
 export default function SettingsScreen() {
   const [displayName, setDisplayName] = useState("");
   const [photoURL, setPhotoURL] = useState("");
+  const [hasCameraRollPermission, setHasCameraRollPermission] = setState("");
 
   const handleSet = async () => {
-    const info = await db
+    const snap = await db
       .collection("users")
       .doc(firebase.auth().currentUser.uid)
       .get();
+    setDisplayName(snap.data().displayName);
+    setPhotoURL(snap.data().photoURL);
+  };
+
+  const askPermission = async () => {
+    const { status } = await ImagePicker.requestCameraRollPermissionsAsync();
+    setHasCameraRollPermission(status === "granted");
   };
 
   useEffect(() => {
@@ -32,6 +41,21 @@ export default function SettingsScreen() {
     handleSet();
   }, []);
 
+  useEffect(() => {
+    // setDisplayName(firebase.auth().currentUser.displayName);
+    // setPhotoURL(firebase.auth().currentUser.photoURL);
+    handleSet();
+  }, []);
+
+  const handlePickImage = () => {
+    // show camera roll, allow user to selet, set photoURL
+    // use firebase (storage)
+    // upload selected image
+    // naming with the user ID
+    // get the url
+    //
+  };
+
   const handleSave = () => {
     // firebase.auth().currentUser.updateProfile({
     //   displayName,
@@ -39,8 +63,9 @@ export default function SettingsScreen() {
     // });
 
     db.collection("users")
-      .doc(firebase.auth().currentUser.uuid)
-      .update({ displayNmae: "", photoURL: "" });
+      .doc(firebase.auth().currentUser.uid)
+      .set({ displayName, photoURL });
+    handleSet();
   };
 
   return (
@@ -51,12 +76,16 @@ export default function SettingsScreen() {
         onChangeText={setDisplayName}
         value={displayName}
       />
+      {photoURL && (
+        <Image style={{ width: 100, height: 100 }} source={{ uri: photoURL }} />
+      )}
       <TextInput
         style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
         placeholder="Photo URL"
         onChangeText={setPhotoURL}
         value={photoURL}
       />
+      <Button title="Pick image" onPress={handlePickImage} />
       <Button title="save" onPress={handleSave} />
     </View>
   );

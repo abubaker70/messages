@@ -20,19 +20,19 @@ import "firebase/database";
 import SettingsScreen from "./SettingsScreen.js";
 
 export default ({ message, handleEdit }) => {
-  const [from, setFrom] = useState("");
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    handleSet();
+    handleUser();
   }, []);
 
-  const handleSet = async () => {
-    const info = await db
+  const handleUser = async () => {
+    const snap = await db
       .collection("users")
       .doc(firebase.auth().currentUser.uid)
-      .get(snapshot => {
-        console.log("message. from data", snapshot.data());
-      });
+      .get();
+    console.log("message. from data", snap.data());
+    setUser(snap.data());
   };
 
   const handleDelete = message => {
@@ -42,15 +42,21 @@ export default ({ message, handleEdit }) => {
   };
 
   return (
-    <>
-      <View>
-        <Text style={styles.getStartedText}>
-          {message.from} - {message.text} - {message.to}
-        </Text>
-        <Button title="Edit" onPress={() => handleEdit(message)} />
-        <Button title="Delete" onPress={() => handleDelete(message)} />
-      </View>
-    </>
+    user && (
+      <>
+        <Image
+          style={{ width: 60, height: 60 }}
+          source={{ uri: user.photoURL }}
+        />
+        <View>
+          <Text style={styles.getStartedText}>
+            {message.from} - {message.text} - {message.to}
+          </Text>
+          <Button title="Edit" onPress={() => handleEdit(message)} />
+          <Button title="Delete" onPress={() => handleDelete(message)} />
+        </View>
+      </>
+    )
   );
 };
 
