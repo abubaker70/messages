@@ -26,13 +26,19 @@ export default ({ message, handleEdit }) => {
     handleUser();
   }, []);
 
-  const handleUser = async () => {
-    const snap = await db
+  const handleUser = () => {
+    const snap = db
       .collection("users")
-      .doc(firebase.auth().currentUser.uid)
-      .get();
-    console.log("message. from data", snap.data());
-    setUser(snap.data());
+      .doc(message.from)
+      .onSnapshot(docSnapshot => {
+        console.log("user snapshot", docSnapshot);
+        console.log("user snapshot", docSnapshot.data());
+        setUser(docSnapshot.data());
+        // const messages = [];
+        // messages.push({ id: doc.id, ...doc.data() });
+      });
+
+    // console.log("message. from data", docSnapshot.data());
   };
 
   const handleDelete = message => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ExpoConfigView } from "@expo/samples";
-import ImagePicker from "expo-image-picker";
+import * as ImagePicker from "expo-image-picker";
 import {
   Image,
   Platform,
@@ -14,12 +14,15 @@ import {
 } from "react-native";
 import firebase from "firebase/app";
 import "firebase/auth";
+import "firebase/storage";
 import db from "../db";
+import { setConfigurationAsync } from "expo/build/AR";
 
 export default function SettingsScreen() {
   const [displayName, setDisplayName] = useState("");
   const [photoURL, setPhotoURL] = useState("");
-  const [hasCameraRollPermission, setHasCameraRollPermission] = setState("");
+  const [hasCameraRollPermission, setHasCameraRollPermission] = useState("");
+  const [uri, setUri] = useState("");
 
   const handleSet = async () => {
     const snap = await db
@@ -47,25 +50,44 @@ export default function SettingsScreen() {
     handleSet();
   }, []);
 
-  const handlePickImage = () => {
-    // show camera roll, allow user to selet, set photoURL
-    // use firebase (storage)
-    // upload selected image
-    // naming with the user ID
-    // get the url
-    //
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1
+    });
+
+    console.log("image picker", result);
+
+    if (!result.cancelled) {
+      console.log("not canceled", result.uri);
+      setUri(result.uri);
+    }
   };
 
-  const handleSave = () => {
-    // firebase.auth().currentUser.updateProfile({
-    //   displayName,
-    //   photoURL
-    // });
+  const handleSave = async () => {
+    if (uri !== "") {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const putResult = await firebase
+        .storage()
+        .ref()
+        .child(firebase.auth().currentUser.uid)
+        .put(blob);
+
+      const url = await firebase
+        .storage()
+        .ref()
+        .child(firebase.auth().currentUser.uid)
+        .getDownloadURL();
+      console.log("Download URL ", url);
+      setPhotoURL(url);
+    }
 
     db.collection("users")
       .doc(firebase.auth().currentUser.uid)
       .set({ displayName, photoURL });
-    handleSet();
   };
 
   return (
@@ -73,18 +95,13 @@ export default function SettingsScreen() {
       <TextInput
         style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
         placeholder="DisplayName"
-        onChangeText={setDisplayName}
+        onChangeText={text => setDisplayName(text)}
         value={displayName}
       />
-      {photoURL && (
+      {photoURL !== "" && (
         <Image style={{ width: 100, height: 100 }} source={{ uri: photoURL }} />
       )}
-      <TextInput
-        style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
-        placeholder="Photo URL"
-        onChangeText={setPhotoURL}
-        value={photoURL}
-      />
+
       <Button title="Pick image" onPress={handlePickImage} />
       <Button title="save" onPress={handleSave} />
     </View>
