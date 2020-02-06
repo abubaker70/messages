@@ -1,5 +1,7 @@
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useState } from "react";
+import MapView, { Marker } from "react-native-maps";
+
 import Message from "./Message";
 import {
   Image,
@@ -10,7 +12,8 @@ import {
   TouchableOpacity,
   View,
   Button,
-  TextInput
+  TextInput,
+  Dimensions
 } from "react-native";
 
 import db from "../db.js";
@@ -31,6 +34,22 @@ export default function HomeScreen() {
   const [text, setText] = useState("");
   const [to, setTo] = useState("");
   const [id, setId] = useState("");
+  const [lat, setLat] = useState(0);
+  const [long, setLong] = useState(0);
+
+  const handleLoca = async () => {
+    const snap = await db
+      .collection("users")
+      .doc(firebase.auth().currentUser.uid)
+      .get();
+    setLat(snap.data().lat);
+    setLong(snap.data().long);
+    console.log(snap.data().lat);
+    console.log(snap.data().long);
+  };
+  useEffect(() => {
+    handleLoca();
+  }, []);
 
   useEffect(() => {
     db.collection("messages").onSnapshot(querySnapshot => {
@@ -72,6 +91,13 @@ export default function HomeScreen() {
     setId("");
   };
 
+  const loca = {
+    latitude: 25.3548,
+    longitude: 51.1839,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -97,6 +123,20 @@ export default function HomeScreen() {
         value={to}
       />
       <Button title="Send" onPress={handleSend} />
+      <MapView
+        showsUserLocation={true}
+        initialRegion={loca}
+        style={styles.mapStyle}
+      >
+        <Marker
+          coordinate={{
+            latitude: lat,
+            longitude: long
+          }}
+          title={"You"}
+          description={"You Are Here"}
+        />
+      </MapView>
     </View>
   );
 }
@@ -144,6 +184,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff"
+  },
+  mapStyle: {
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height
   },
   developmentModeText: {
     marginBottom: 20,

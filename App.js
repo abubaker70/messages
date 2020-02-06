@@ -31,7 +31,7 @@ export default function App(props) {
     await firebase.auth().createUserWithEmailAndPassword(email, password);
     db.collection("users")
       .doc(firebase.auth().currentUser.uid)
-      .add({
+      .set({
         displayNmae: email,
         photoURL:
           "https://clipartart.com/images/default-profile-picture-clipart-3.jpg"
